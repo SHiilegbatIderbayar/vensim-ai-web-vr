@@ -1,6 +1,7 @@
 // =========================
 // PAGE NAVIGATION
 // =========================
+const API_BASE = "https://vensim-ai-web-vr.onrender.com";
 const homeSection = document.getElementById("homeSection");
 const appSection = document.getElementById("appSection");
 const chartRegistry = {};
@@ -662,13 +663,12 @@ document.getElementById("resetParamsBtn")?.addEventListener("click", () => {
   hideError();
   runScenarioSimulation();
 });
-
 async function initializeDashboard() {
   showLoading(true, "Суурь симуляци уншиж байна...");
   hideError();
 
   try {
-    const res = await fetch("/api/dashboard/init");
+    const res = await fetch(`${API_BASE}/api/dashboard/init`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Dashboard эхлүүлэхэд алдаа гарлаа.");
 
@@ -701,7 +701,7 @@ async function runScenarioSimulation() {
   hideError();
 
   try {
-    const res = await fetch("/api/dashboard/run", {
+    const res = await fetch(`${API_BASE}/api/dashboard/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(getCurrentScenarioPayload()),
@@ -862,7 +862,7 @@ async function sendChat(forcedText = null) {
   if (chatSendBtn) chatSendBtn.disabled = true;
 
   try {
-    const res = await fetch("/api/chat", {
+    const res = await fetch(`${API_BASE}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, session_id: getSessionId() }),
