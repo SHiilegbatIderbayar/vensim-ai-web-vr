@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vensim AI — Симуляцийн үр дүн</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #060a10;
+      --surface: #0d1320;
+      --surface-2: #111926;
+      --border: rgba(255,255,255,.07);
+      --border-glow: rgba(0,200,150,.18);
+      --text: #eef2fa;
+      --muted: #6b7a95;
+      --accent: #00e0a0;
+      --accent-2: #0090ff;
+      --accent-3: #ff5fad;
+      --accent-glow: rgba(0,224,160,.12);
+      --radius: 20px;
+      --shadow: 0 24px 64px rgba(0,0,0,.5);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: .5;
+    }
+
+    .hidden-page { display: none !important; }
+    .active-page { display: block; }
+
+    #homeSection {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,224,160,.1) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 90% 60%, rgba(0,144,255,.08) 0%, transparent 60%),
+        var(--bg);
+      position: relative;
+    }
+
+    #homeSection::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,224,160,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,224,160,.035) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 20%, transparent 80%);
+    }
+
+    .home-nav {
+      position: relative; z-index: 10;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-mark {
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      display: grid; place-items: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 18px;
+      color: #060a10;
+      box-shadow: 0 0 28px rgba(0,224,160,.35);
+    }
+
+    .logo-text h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 20px;
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+
+    .logo-text p {
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .nav-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 6px;
+    }
+
+    .nav-pill-item {
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .25s;
+      border: none;
+      background: transparent;
+    }
+
+    .nav-pill-item.active, .nav-pill-item:hover {
+      background: rgba(0,224,160,.12);
+      color: var(--accent);
+    }
+
+    .hero {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 80px 40px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      position: relative; z-index: 2;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,224,160,.08);
+      border: 1px solid rgba(0,224,160,.2);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .06em;
+      margin-bottom: 28px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 68px;
+      font-weight: 800;
+      line-height: .95;
+      letter-spacing: -.05em;
+      margin-bottom: 24px;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, #00e0a0 0%, #0090ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 40px;
+      max-width: 440px;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 14px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      color: #060a10;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 16px 32px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      transition: all .3s;
+      box-shadow: 0 0 40px rgba(0,224,160,.25);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 50px rgba(0,224,160,.35);
+    }
+
+    .btn-primary .arrow {
+      font-size: 18px;
+      transition: transform .3s;
+    }
+
+    .btn-primary:hover .arrow { transform: translateX(4px); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 15px 28px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all .25s;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.14);
+    }
+
+    .hero-visual {
+      position: relative;
+    }
+
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top left, rgba(0,224,160,.08), transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .hero-card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    .mini-chart-container {
+      height: 140px;
+      margin-bottom: 20px;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .hero-stat {
+      background: rgba(0,0,0,.3);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .hero-stat .label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 6px;
+    }
+
+    .hero-stat .value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+    }
+
+    .hero-stat .value.green { color: var(--accent); }
+    .hero-stat .value.blue { color: var(--accent-2); }
+    .hero-stat .value.pink { color: var(--accent-3); }
+
+    .features {
+      max-width: 1280px;
+      margin: 80px auto 0;
+      padding: 0 40px 80px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      position: relative; z-index: 2;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: all .3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .feature-card:nth-child(1)::before { background: linear-gradient(90deg, #00e0a0, transparent); }
+    .feature-card:nth-child(2)::before { background: linear-gradient(90deg, #0090ff, transparent); }
+    .feature-card:nth-child(3)::before { background: linear-gradient(90deg, #ff5fad, transparent); }
+
+    .feature-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,.12); }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon-wrap {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+    }
+
+    .feature-card:nth-child(1) .feature-icon-wrap { background: rgba(0,224,160,.1); }
+    .feature-card:nth-child(2) .feature-icon-wrap { background: rgba(0,144,255,.1); }
+    .feature-card:nth-child(3) .feature-icon-wrap { background: rgba(255,95,173,.1); }
+
+    .feature-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    #appSection {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: rgba(6,10,16,.98);
+      border-right: 1px solid var(--border);
+      padding: 28px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px;
+    }
+
+    .sidebar-logo {
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      display: grid; place-items: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 16px;
+      color: #060a10;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand-text h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 17px;
+      letter-spacing: -.03em;
+    }
+
+    .sidebar-brand-text p {
+      font-size: 9px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .sidebar-section { display: flex; flex-direction: column; gap: 4px; }
+
+    .sidebar-label {
+      font-size: 10px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 4px 12px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: left;
+      width: 100%;
+    }
+
+    .nav-item .icon { font-size: 16px; }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(0,224,160,.08);
+      color: var(--accent);
+      border: 1px solid rgba(0,224,160,.15);
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+    }
+
+    .system-status {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .system-status-title {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      margin-bottom: 10px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .status-row:last-child { margin-bottom: 0; }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(0,224,160,.12);
+      color: var(--accent);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      background: rgba(6,10,16,.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .topbar-left .eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .topbar-left h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -.04em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,224,160,.06);
+      border: 1px solid rgba(0,224,160,.15);
+      border-radius: 50px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .topbar-chip::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    .content-area { padding: 28px 32px; }
+
+    .param-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .param-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,224,160,.4), transparent);
+    }
+
+    .param-panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .param-panel-header h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -.03em;
+      margin-bottom: 4px;
+    }
+
+    .param-panel-header p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .reset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,144,255,.1);
+      border: 1px solid rgba(0,144,255,.2);
+      color: var(--accent-2);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .reset-btn:hover {
+      background: rgba(0,144,255,.18);
+    }
+
+    .param-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+    }
+
+    .param-card {
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 16px;
+      padding: 16px 14px 14px;
+      transition: border-color .2s;
+    }
+
+    .param-card:hover { border-color: rgba(0,224,160,.2); }
+
+    .param-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .param-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .param-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--accent);
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .param-unit {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 8px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      box-shadow: 0 0 12px rgba(0,224,160,.5);
+      transition: box-shadow .2s;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb {
+      box-shadow: 0 0 20px rgba(0,224,160,.7);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      border: none;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 16px 14px;
+      transition: border-color .25s, transform .25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-card:hover {
+      border-color: rgba(0,224,160,.2);
+      transform: translateY(-2px);
+    }
+
+    .chart-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .chart-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: -.01em;
+    }
+
+    .chart-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(0,224,160,.08);
+      color: var(--accent);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .chart-canvas-wrap {
+      height: 200px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .chat-toggle-btn {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      width: 56px; height: 56px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      display: grid; place-items: center;
+      box-shadow: 0 8px 32px rgba(0,224,160,.3);
+      transition: all .3s;
+      z-index: 1000;
+    }
+
+    .chat-toggle-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 14px 44px rgba(0,224,160,.4);
+    }
+
+    .chat-widget {
+      position: fixed;
+      bottom: 100px; right: 28px;
+      width: min(700px, calc(100vw - 56px));
+      height: min(760px, calc(100vh - 140px));
+      max-height: calc(100vh - 140px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      overflow: hidden;
+      transition: all .3s cubic-bezier(.4,0,.2,1);
+    }
+
+    .chat-widget.hidden-chat {
+      opacity: 0;
+      transform: translateY(20px) scale(.95);
+      pointer-events: none;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.2);
+    }
+
+    .chat-header-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      display: grid; place-items: center;
+      font-size: 16px;
+    }
+
+    .chat-header-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .chat-header-sub {
+      font-size: 11px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .chat-header-sub::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    .chat-close-btn {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all .2s;
+    }
+
+    .chat-close-btn:hover {
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.1) transparent;
+    }
+
+    .chat-bubble {
+      max-width: 82%;
+      padding: 11px 15px;
+      border-radius: 16px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .chat-bubble.bot {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-bubble.user {
+      background: linear-gradient(135deg, rgba(0,224,160,.2), rgba(0,144,255,.2));
+      border: 1px solid rgba(0,224,160,.2);
+      color: var(--text);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-input-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,.15);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .chat-input:focus {
+      border-color: rgba(0,224,160,.3);
+    }
+
+    .chat-input::placeholder { color: var(--muted); }
+
+    .chat-send {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00e0a0, #0090ff);
+      border: none;
+      cursor: pointer;
+      display: grid; place-items: center;
+      font-size: 16px;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+
+    .chat-send:hover {
+      transform: scale(1.08);
+      box-shadow: 0 4px 20px rgba(0,224,160,.3);
+    }
+
+    .chat-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-clear-btn {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      min-width: 74px;
+      height: 30px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 0 10px;
+      transition: all .2s;
+    }
+
+    .chat-clear-btn:hover {
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+    }
+
+    .chat-greeting-preview {
+      position: fixed;
+      right: 28px;
+      bottom: 100px;
+      width: min(330px, calc(100vw - 56px));
+      background: rgba(255,255,255,.92);
+      color: #2f3542;
+      border-radius: 16px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.18);
+      padding: 16px 16px 14px;
+      z-index: 999;
+      transition: all .25s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .chat-greeting-preview.hidden-preview {
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+
+    .chat-greeting-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .chat-greeting-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2f3542;
+      line-height: 1.5;
+    }
+
+    .chat-greeting-body {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #444b57;
+    }
+
+    .chat-greeting-close {
+      background: transparent;
+      border: none;
+      color: #6b7280;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .chat-greeting-close:hover {
+      color: #111827;
+    }
+
+    .dashboard-status {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .dashboard-status.show { display: block; }
+    .dashboard-status.loading {
+      background: rgba(0,144,255,.10);
+      border: 1px solid rgba(0,144,255,.20);
+      color: #8ec9ff;
+    }
+
+    .dashboard-status.error {
+      background: rgba(255,95,173,.10);
+      border: 1px solid rgba(255,95,173,.25);
+      color: #ff9cc4;
+    }
+
+    @media (max-width: 1400px) {
+      .param-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 1200px) {
+      .charts-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-title { font-size: 52px; }
+    }
+    @media (max-width: 1000px) {
+      .hero { grid-template-columns: 1fr; padding-top: 40px; }
+      .hero-visual { display: none; }
+      .features { grid-template-columns: 1fr; }
+      .hero-title { font-size: 48px; }
+    }
+    @media (max-width: 900px) {
+      #appSection { grid-template-columns: 1fr; }
+      .sidebar { height: auto; position: relative; flex-direction: row; flex-wrap: wrap; gap: 16px; padding: 16px; }
+      .sidebar-bottom { display: none; }
+    }
+    @media (max-width: 760px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .param-grid { grid-template-columns: repeat(2, 1fr); }
+      .home-nav { padding: 20px; }
+      .hero { padding: 40px 20px 0; }
+      .features { padding: 40px 20px; }
+      .content-area { padding: 16px; }
+    }
+    @media (max-width: 520px) {
+      .param-grid { grid-template-columns: 1fr; }
+      .chat-widget {
+        right: 12px;
+        left: 12px;
+        width: auto;
+        height: min(78vh, 760px);
+        max-height: min(78vh, 760px);
+        bottom: 84px;
+      }
+      .chat-greeting-preview {
+        right: 12px;
+        left: 12px;
+        width: auto;
+        bottom: 84px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<section id="homeSection" class="active-page">
+  <nav class="home-nav">
+    <div class="logo">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">
+        <h1>Vensim AI</h1>
+        <p>Precision Intelligence</p>
+      </div>
+    </div>
+    <div class="nav-pill">
+      <button class="nav-pill-item active">Нүүр</button>
+      <button class="nav-pill-item" id="navToAppBtn">Симуляци</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-badge">Хотын системийн загварчлал</div>
+      <h2 class="hero-title">
+        Тавтай морил,<br />
+        <span class="highlight">Хэрэглэгч</span>
+      </h2>
+      <p class="hero-sub">Таны оюуны орон зайг архитектурчлах нь — хотын динамик системийг өндөр нарийвчлалтайгаар дүрслэх тусгай платформ.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" id="startBtn">
+          Эхлэх <span class="arrow">→</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="hero-card-header">
+          <span class="hero-card-title">Бодит цаг симуляци</span>
+          <span class="status-dot">Идэвхтэй</span>
+        </div>
+        <div class="mini-chart-container">
+          <canvas id="heroMiniChart"></canvas>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="label">ААН</div>
+            <div class="value green">+22%</div>
+          </div>
+          <div class="hero-stat">
+            <div class="label">Хүн ам</div>
+            <div class="value blue">7,600</div>
+          </div>
+          <div class="hero-stat">
+            <div class="label">Индекс</div>
+            <div class="value pink">0.82</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon-wrap">⚡</div>
+      <h3>Хурдатай ажиллагаа</h3>
+      <p>Миллисекунд бүрийг хэмнэх архитектур. Параметр бүрийн өөрчлөлт бодит цагт бүх графикт тусгагдана.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap">✦</div>
+      <h3>Ухаалаг интеграц</h3>
+      <p>Таны бүх хэрэгцээг нягтлах, уялдуулах. 10 өөр метрик нэг дороос хянах боломжтой.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap">🛡</div>
+      <h3>Дэлхийн стандарт</h3>
+      <p>Олон улсын чанарын хэмжүүрт нийцсэн Vensim системийн динамик загварчлал.</p>
+    </div>
+  </div>
+</section>
+
+<div id="appSection" class="hidden-page">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">V</div>
+      <div class="sidebar-brand-text">
+        <h2>Vensim AI</h2>
+        <p>Precision Intelligence</p>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Навигаци</div>
+      <button class="nav-item" id="navHomeBtn">
+        <span class="icon">⌂</span> Нүүр хуудас
+      </button>
+      <button class="nav-item active" id="navResultBtn">
+        <span class="icon">◈</span> Симуляцийн үр дүн
+      </button>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="system-status">
+        <div class="system-status-title">Системийн төлөв</div>
+        <div class="status-row">
+          <span>Загвар</span>
+          <span class="status-badge">Идэвхтэй</span>
+        </div>
+        <div class="status-row">
+          <span>Хугацаа</span>
+          <span style="color:var(--muted); font-size:12px;">41 жил</span>
+        </div>
+        <div class="status-row">
+          <span>Метрик</span>
+          <span style="color:var(--muted); font-size:12px;">10 үзүүлэлт</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <p class="eyebrow">Мэдээллийн дүн шинжилгээ</p>
+        <h2>Хотын симуляцийн графикууд</h2>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-chip">Бодит цаг</div>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <div class="param-panel">
+        <div class="param-panel-header">
+          <div>
+            <h3>Симуляцийн параметрүүд</h3>
+            <p>Утгыг өөрчлөхөд бүх график автоматаар шинэчлэгдэнэ</p>
+          </div>
+          <button id="resetParamsBtn" class="reset-btn">↺ Анхны утга</button>
+        </div>
+
+        <div id="dashboardLoadingStatus" class="dashboard-status loading">Симуляци тооцоолж байна...</div>
+        <div id="dashboardErrorStatus" class="dashboard-status error">Симуляци амжилтгүй.</div>
+
+        <div class="param-grid">
+          <div class="param-card">
+            <div class="param-header">
+              <span class="param-label">1. ААН нэгж нэмэгдэх он</span>
+              <strong class="param-value" id="val_aan_growth">0</strong>
+            </div>
+            <input type="range" id="aan_growth" min="0" max="1" value="0" step="1" />
+            <div class="param-unit">Хувь</div>
+          </div>
+
+          <div class="param-card">
+            <div class="param-header">
+              <span class="param-label">2. ААН нэгжийн хэмжээ</span>
+              <strong class="param-value" id="val_aan_cluster">90</strong>
+            </div>
+            <input type="range" id="aan_cluster" min="0" max="200" value="90" step="1" />
+            <div class="param-unit">км²</div>
+          </div>
+
+          <div class="param-card">
+            <div class="param-header">
+              <span class="param-label">3. Суурьшлийн хэмжээ</span>
+              <strong class="param-value" id="val_housing_zone">243</strong>
+            </div>
+            <input type="range" id="housing_zone" min="100" max="500" value="243" step="1" />
+            <div class="param-unit">км²</div>
+          </div>
+
+          <div class="param-card">
+            <div class="param-header">
+              <span class="param-label">4. Нэг ААН-д ажлын байр</span>
+              <strong class="param-value" id="val_job_density">20</strong>
+            </div>
+            <input type="range" id="job_density" min="5" max="50" value="20" step="1" />
+            <div class="param-unit">Тоо</div>
+          </div>
+
+          <div class="param-card">
+            <div class="param-header">
+              <span class="param-label">5. Хөдөлмөрийн оролцоо</span>
+              <strong class="param-value" id="val_labor_participation">0.30</strong>
+            </div>
+            <input type="range" id="labor_participation" min="0.0" max="1.0" value="0.30" step="0.01" />
+            <div class="param-unit">Хувь</div>
+          </div>
+
+          <div class="param-card">
+            <div class="param-header">
+              <span class="param-label">6. Бизнесийн татвар</span>
+              <strong class="param-value" id="val_business_tax">300</strong>
+            </div>
+            <input type="range" id="business_tax" min="0" max="1000" value="300" step="10" />
+            <div class="param-unit">Тоо</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">1. ААН (бизнесийн тоо)</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_aan"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">2. Хүн ам</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_population"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">3. Орон сууц</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_housing"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">4. Татах чадвар</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_attraction"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">5. Ажлын байр</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_jobs"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">6. Ирээдүйн шилжин ирэх хүн</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_migration"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">7. Ажиллах хүч</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_labor"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">8. Зорчигч</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_passenger"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">9. Боловсролын салбар</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_education"></canvas></div></div>
+        <div class="chart-card"><div class="chart-card-top"><span class="chart-name">10. Үйлчилгээний чанар</span><span class="chart-badge">Live</span></div><div class="chart-canvas-wrap"><canvas id="chart_service"></canvas></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="chatGreetingPreview" class="chat-greeting-preview">
+  <div class="chat-greeting-top">
+    <div class="chat-greeting-title">👋 Сайн байна уу.</div>
+    <button id="chatGreetingCloseBtn" class="chat-greeting-close" type="button">×</button>
+  </div>
+  <div class="chat-greeting-body">Би хиймэл оюунт чатбот байна.<br>Танд юугаар туслах вэ?</div>
+</div>
+
+<button id="chatToggleBtn" class="chat-toggle-btn" type="button">💬</button>
+
+<div id="chatWidget" class="chat-widget hidden-chat">
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <div class="chat-avatar">🤖</div>
+      <div>
+        <div class="chat-header-title">Vensim AI Chat</div>
+        <div class="chat-header-sub">Онлайн</div>
+      </div>
+    </div>
+    <div class="chat-header-actions">
+      <button id="chatClearBtn" class="chat-clear-btn" type="button">Clear</button>
+      <button id="chatCloseBtn" class="chat-close-btn" type="button">×</button>
+    </div>
+  </div>
+  <div id="chatMessages" class="chat-messages">
+    <div class="chat-bubble bot">Сайн байна уу. Би таны Vensim AI туслах чат байна.</div>
+    <div class="chat-bubble bot">Та асуултаа бичээд илгээнэ үү.</div>
+  </div>
+  <div class="chat-input-area">
+    <input type="text" id="chatInput" class="chat-input" placeholder="Асуултаа бичнэ үү..." />
+    <button id="chatSendBtn" class="chat-send" type="button">➤</button>
+  </div>
+</div>
+
+<script src="/script.js"></script>
+</body>
+</html>
