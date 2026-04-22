@@ -16,7 +16,7 @@ from app.dashboard_service import DashboardService
 from app.engine import AssistantEngine
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-WEB_DIR = BASE_DIR / "web"
+WEB_DIR = BASE_DIR / "frontend"
 
 app = FastAPI(title="Vensim AI Local Web App")
 
